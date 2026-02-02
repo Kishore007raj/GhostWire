@@ -1,132 +1,147 @@
 # Ghostwire
 
-Ghostwire is a **host-based outbound network monitoring tool** that shows which applications on your system are communicating with the internet, where they are sending data, and whether that behavior looks normal or suspicious.
+Ghostwire is a **local, host-based outbound network visibility tool**.  
+It shows **which application is talking to the internet**, **where it is talking**, and **whether that behavior makes sense**.
 
-It focuses on **visibility, attribution, and clarity** — not blocking traffic, not deep packet inspection, and not antivirus behavior.
-
----
-
-## Problem Statement
-
-Many applications initiate background network communication without user awareness.
-
-Most users do not know:
-- which application is sending data
-- where the data is going
-- whether that activity is expected or dangerous
-
-Existing tools are either:
-- too technical
-- noisy and raw
-- blocking-focused without explanation
-- designed for enterprises, not individuals
-
-There is no simple, local tool that clearly maps **application → destination → behavior**.
-
-Ghostwire exists to fill that gap.
+Ghostwire does not block traffic, inspect packet contents, or act like an antivirus.  
+It exists to expose background network behavior that usually stays invisible.
 
 ---
 
-## Objective
+## Problem
 
-Build a **local-first, privacy-friendly watchdog** that:
+Modern applications routinely send data in the background.
 
-- Monitors outbound network activity
-- Maps traffic to the exact application responsible
-- Flags unexpected or suspicious behavior
-- Presents the information in a clear, human-readable way
+Users usually have no idea:
 
-All analysis happens **on the user’s machine**.  
-No cloud. No telemetry. No data exfiltration.
+- which app is sending data
+- which server or country it is talking to
+- whether the traffic is normal, excessive, or suspicious
+
+Existing tools fail because they:
+
+- dump raw network data with no attribution
+- block traffic without explaining why
+- require enterprise-level knowledge
+- prioritize control over understanding
+
+There is no simple local tool that answers:
+**“Which app is doing this, and should I care?”**
+
+Ghostwire answers exactly that.
 
 ---
 
-## What Ghostwire Does (In Scope)
+## Goal
 
-### Core Capabilities
+Build a **local-first network watchdog** that:
 
-- Monitor **outbound** network connections
-- Map network sockets to running processes
-- Track data usage per application
-- Detect suspicious or unexpected behavior
+- Monitors outbound connections only
+- Accurately maps traffic to the responsible process
+- Detects unexpected or suspicious behavior
+- Explains findings clearly to the user
+
+All analysis happens **on the machine itself**.  
+No cloud. No telemetry. No external data sharing.
+
+---
+
+## What Ghostwire Does
+
+### Core Functions
+
+- Monitor outbound network connections
+- Correlate sockets to running processes
+- Track per-application data usage
+- Detect anomalous background behavior
 - Generate local alerts
-- Provide a real-time visual summary
+- Present activity in a clean dashboard
 
-### Key Features
+### Key Capabilities
 
-- **Process-to-Network Mapping**
-  - Identify the exact app responsible for traffic
-- **Top Talkers**
-  - Apps consuming the most bandwidth
-- **Anomaly Detection**
-  - Rule-based detection of unusual behavior
-- **Local Dashboard**
-  - Real-time view of app activity
-- **Structured Logs**
-  - CSV and JSON exports for analysis
+- **Process ↔ Network Attribution**  
+  Every connection is tied to a specific executable
 
----
+- **Top Talkers**  
+  Identify apps consuming the most bandwidth
 
-## What Ghostwire Does NOT Do (Out of Scope)
+- **Rule-Based Anomaly Detection**  
+  Detect behavior that deviates from normal usage
 
-- ❌ Block connections (not a firewall)
-- ❌ Inspect packet payloads (no DPI)
-- ❌ Scan files for malware
-- ❌ Act as an antivirus or IDS
-- ❌ Monitor inbound traffic
+- **Live Visibility**  
+  Real-time view of active and background traffic
 
-Ghostwire is **visibility-first**, not prevention-first.
+- **Structured Output**  
+  CSV and JSON exports for auditing or debugging
 
 ---
 
-## Target Users
+## What Ghostwire Does NOT Do
 
-- Privacy-conscious individuals
-- Security-focused users
-- Remote workers / home office users
-- Software developers testing network behavior
-- IT administrators in small-to-medium environments
+Ghostwire is intentionally narrow in scope.
+
+It does **not**:
+
+- Block or filter traffic
+- Inspect packet payloads
+- Scan files for malware
+- Act as a firewall, IDS, or antivirus
+- Monitor inbound connections
+
+Ghostwire prioritizes **visibility and attribution**, not enforcement.
 
 ---
 
-## System Architecture
+## Intended Users
 
-Ghostwire follows a **lightweight, host-centric architecture**.
+- Privacy-focused individuals
+- Security-conscious users
+- Remote and home-office workers
+- Developers debugging network behavior
+- Small-to-medium IT teams needing local visibility
 
-### Components
+---
 
-- OS-level outbound traffic monitoring
+## Architecture Overview
+
+Ghostwire uses a **lightweight, host-centric design**.
+
+### Main Components
+
+- OS-level outbound connection monitoring
 - Process-to-socket correlation
-- Rule-based anomaly detection
+- Rule-based anomaly engine
 - Local severity scoring
 - Optional local web dashboard
 
-All components run locally.
+Everything runs locally.  
+Nothing is shipped off-device.
 
 ---
 
-## Tech Stack
+## Technical Stack
 
 ### Core
 
 - **Language:** Python 3.10+
 - **Process Mapping:** `psutil`
-- **Packet / Connection Data:** OS-native APIs, Scapy / PyShark (optional)
+- **Connection Data:** OS-native APIs  
+  (Scapy / PyShark optional for metadata)
 
 ### Backend
 
 - **API:** FastAPI
-- **Real-Time:** WebSockets
+- **Real-Time Streaming:** WebSockets
 - **Storage:** SQLite (local, WAL mode)
 
 ### Frontend
 
 - **Framework:** React / Next.js
-- **Charts:** Chart.js / Recharts
+- **Visualization:** Chart.js / Recharts
 
-### Output & Alerts
+### Alerts & Output
 
-- OS notifications
+- OS-level notifications
 - CSV exports
 - JSON logs
 
@@ -134,72 +149,80 @@ All components run locally.
 
 ## Detection Coverage
 
-Ghostwire can detect:
+Ghostwire can identify:
 
-- Apps sending data without user interaction
-- Unknown or suspicious executables communicating externally
-- Very high background data usage
+- Applications sending data without user interaction
+- Unknown or unsigned executables making outbound connections
+- Excessive background bandwidth usage
 - Repeated short-lived connections (tracking-like behavior)
 - Inactive apps suddenly transmitting data
-- New destinations contacted by existing apps
+- New or rare destinations contacted by known apps
+
+Detection is **explainable and rule-driven**, not opaque.
 
 ---
 
 ## Security & Privacy Design
 
-- Runs only on the local system
-- No cloud connection
+- Runs only on the local machine
+- No cloud services
 - No payload inspection
-- No external APIs required
+- No external threat feeds required
 - All data stored locally
-- Minimal permissions beyond OS requirements
+- Uses only necessary OS permissions
+
+Ghostwire cannot spy on the user — by design.
 
 ---
 
 ## Setup & Usage
 
 1. Install Ghostwire as a local agent
-2. Start monitoring via CLI or service mode
-3. Network activity is tracked in real time
-4. Alerts are generated using defined rules
+2. Start it via CLI or service mode
+3. Outbound traffic is monitored continuously
+4. Alerts trigger when rules are violated
 5. Dashboard shows live application activity
 
-No account. No login. No cloud dependency.
+No accounts.  
+No logins.  
+No internet dependency.
 
 ---
 
 ## Project Structure
 
+```text
 ghostwire/
 ├── agent/
-│ ├── capture/ # network capture
-│ ├── process/ # PID ↔ socket mapping
-│ ├── detect/ # anomaly rules
-│ ├── store/ # SQLite storage
-│ ├── models/ # data models
-│ └── main.py # agent loop
+│   ├── capture/     # outbound connection tracking
+│   ├── process/     # PID ↔ socket correlation
+│   ├── detect/      # anomaly rules
+│   ├── store/       # SQLite persistence
+│   ├── models/      # shared data models
+│   └── main.py      # agent loop
 ├── backend/
-│ ├── api.py # FastAPI endpoints
-│ ├── ws.py # WebSocket streaming
-│ └── db.py # DB access
-├── frontend/ # React dashboard
-├── data/ # local data
-├── docs/ # design notes
+│   ├── api.py       # FastAPI endpoints
+│   ├── ws.py        # WebSocket streams
+│   └── db.py        # database access
+├── frontend/        # React dashboard
+├── data/            # local runtime data
+├── docs/            # design notes
 └── README.md
+```
 
 ---
 
-## Expected Outcomes (MVP)
+## MVP Outcomes
 
-- Reliable process-to-network correlation
-- High-signal suspicious traffic alerts
-- Clear, readable activity summaries
+- Correct and stable process-to-network mapping
+- High-signal alerts with clear explanations
+- Readable summaries of network behavior
 - Minimal false positives
-- Stable long-running local agent
+- Reliable long-running local agent
 
 ---
 
-## Key Challenges & Constraints
+## Constraints
 
 - No traffic blocking
 - No file scanning
@@ -207,37 +230,38 @@ ghostwire/
 - No ML in MVP
 - Approximate bandwidth attribution is acceptable
 
-Correctness and clarity matter more than completeness.
+Correct attribution matters more than perfect precision.
 
 ---
 
-## Future Scope
+## Future Work
 
-- Adaptive baseline learning
-- Policy-based allowlists
+- Adaptive behavioral baselines
+- User-defined allowlists
 - Lightweight ML-assisted scoring
 - Cross-host aggregation for SMEs
 - SIEM integration
-- Windows and macOS support
+- Expanded OS support (Windows / macOS)
 
 ---
 
-## References (Study, Not Copy)
+## References (For Study)
 
-- VolkanSah / Monitoring-outgoing-connections
-- WhoYouCalling
-- BPFView
-- netproc
-- network-security-monitor
-- psutil documentation
-- FastAPI WebSocket guides
+- [Monitoring-outgoing-connections](https://github.com/VolkanSah/Monitoring-outgoing-connections)
+- [WhoYouCalling](https://github.com/H4NM/WhoYouCalling)
+- [BPFView](https://github.com/jnesss/bpfview)
+- [netproc](https://github.com/berghetti/netproc)
+- [network-security-monitor](https://github.com/rafi03/network-security-monitor)
+- [psutil documentation](https://psutil.readthedocs.io/en/latest/)
+- [FastAPI WebSocket guides](https://testdriven.io/blog/fastapi-postgres-websockets/)
+
 
 ---
 
-## Philosophy
+## Design Philosophy
 
-Ghostwire is not trying to see *everything*.  
-It is trying to show **the right things**.
+Ghostwire does not try to see everything.  
+It tries to show **the right things**.
 
 Visibility over noise.  
 Local over cloud.  
