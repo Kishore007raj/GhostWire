@@ -22,8 +22,10 @@ def get_outbound_connections():  # Define a function to get outbound network con
         result.append({  # Append the connection details to the result list.
             'pid': conn.pid,  # Add the process ID.
             'protocol': protocol,  # Add the protocol type.
-            'local_address': f"{laddr.ip}:{laddr.port}",  # Format and add the local address.
-            'remote_address': f"{raddr.ip}:{raddr.port}",  # Format and add the remote address.
+            'local_ip': laddr.ip,  # Add the local IP.
+            'local_port': laddr.port,  # Add the local port.
+            'remote_ip': raddr.ip,  # Add the remote IP.
+            'remote_port': raddr.port,  # Add the remote port.
             'status': conn.status  # Add the connection status.
         })
 

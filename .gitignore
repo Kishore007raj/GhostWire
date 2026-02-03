@@ -34,6 +34,8 @@ Thumbs.db
 data/db/*.db
 data/db/*.sqlite
 data/db/*.sqlite3
+data/db/*.db-shm
+data/db/*.db-wal
 
 # =====================
 # Exports (generated)

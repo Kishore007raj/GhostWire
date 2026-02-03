@@ -29,7 +29,7 @@ def enrich_connections(connections):
                 "create_time": proc.create_time()  # Add the process creation time.
             })
 
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except Exception:
             # Handle cases where the process no longer exists or access is denied.
             enriched.append({
                 **conn,  # Include all original connection data.
