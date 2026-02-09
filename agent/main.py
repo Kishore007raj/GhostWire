@@ -3,6 +3,7 @@ from agent.capture.connections import get_outbound_connections  # Import functio
 from agent.process.mapper import enrich_connections  # Import function to enrich connections with process info.
 from agent.traffic.bandwidth import BandwidthTracker  # Import BandwidthTracker class for network monitoring.
 from agent.store.db import GhostwireDB  # Import GhostwireDB class for database operations.
+from agent.detect.engine import run_detection  # Import function to run detection rules.
 
 def run_agent():
     """
@@ -59,6 +60,14 @@ def run_agent():
                 item["bytes_sent"] = per_pid_sent  # Assign sent bytes.
                 item["bytes_recv"] = per_pid_recv  # Assign received bytes.
                 item["timestamp"] = bw_sample["timestamp"]  # Assign timestamp.
+
+                alerts = run_detection(item)  # Run detection rules on this enriched connection.
+                for alert in alerts:  # If any alerts are generated, insert them into the database.
+                    try:
+                        print("Alert:", alert)  # Insert the alert into the database.
+                    except Exception as e:
+                        print(f"Error inserting alert: {e}")
+                        continue
 
                 try:
                     db.insert_connection(item)  # Insert the enriched connection into the database.
