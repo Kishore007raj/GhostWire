@@ -23,16 +23,27 @@ def run_detection(record):
     alerts = []
     
     for rule in SET_OF_RULES:
-        alert = rule(record)
-        if alert:
-            alerts.append({
-                "timestamp": record.get("timestamp"),
-                "process_name": record.get("process_name"),
-                "pid": record.get("pid"),
-                "exe": record.get("exe"),
-                "rule": alert.get("rule"),
-                "severity": alert.get("severity"),
-                "reason": alert.get("reason"),
-            })
+        try:
+            alert = rule(record)
+        except Exception:
+            # A single rule should not break the detection pipeline.
+            continue
+
+        # Only accept None or a mapping-like alert dict
+        if not alert:
+            continue
+
+        if not isinstance(alert, dict):
+            continue
+
+        alerts.append({
+            "timestamp": record.get("timestamp"),
+            "process_name": record.get("process_name"),
+            "pid": record.get("pid"),
+            "exe": record.get("exe"),
+            "rule": alert.get("rule"),
+            "severity": alert.get("severity"),
+            "reason": alert.get("reason"),
+        })
     
     return alerts

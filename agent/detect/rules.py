@@ -230,6 +230,8 @@ def rule_repeated_connections(record, window_seconds=60, threshold=10):
     _connection_counts[pid] = [t for t in timestamps if now - t <= window_seconds]
 
     if len(_connection_counts[pid]) > threshold:
+        # Reset timestamps to avoid repeated spam from the same ongoing burst.
+        _connection_counts[pid] = []
         return {
             "rule": "repeated_connections",
             "severity": "low",

@@ -65,6 +65,7 @@ def run_agent():
                 for alert in alerts:  # If any alerts are generated, insert them into the database.
                     try:
                         print("Alert:", alert)  # Insert the alert into the database.
+                        db.insert_alert(alert)
                     except Exception as e:
                         print(f"Error inserting alert: {e}")
                         continue

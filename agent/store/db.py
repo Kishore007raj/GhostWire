@@ -3,7 +3,7 @@
 import sqlite3
 import os
 from pathlib import Path
-from agent.store.models import CONNECTION_TABLE, BANDWIDTH_TABLE
+from agent.store.models import CONNECTION_TABLE, BANDWIDTH_TABLE, ALERT_TABLE
 
 # Make DB_PATH absolute to avoid working directory issues
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,10 +22,11 @@ class GhostwireDB:
     #initialize database tables
     def __init__tables(self):
         cursor = self.conn.cursor()
-        cursor.execute("DROP TABLE IF EXISTS connections;")
+        # Create tables if they don't exist. Do NOT drop existing tables to avoid
+        # data loss on agent restart.
         cursor.execute(CONNECTION_TABLE)
-        cursor.execute("DROP TABLE IF EXISTS bandwidth_summary;")
         cursor.execute(BANDWIDTH_TABLE)
+        cursor.execute(ALERT_TABLE)
         self.conn.commit()
     
     #insert a network connection record into the database
@@ -46,6 +47,7 @@ class GhostwireDB:
             data['bytes_sent'], data['bytes_recv']
         )
         )
+        # Do not commit here; caller (main loop) batches commits for efficiency.
         
    #insert a bandwidth summary record into the database 
     def insert_bandwidth_summary(self, bw: dict):
@@ -62,6 +64,24 @@ class GhostwireDB:
             bw['bytes_sent'], bw['bytes_recv'], bw['interval']
         )
         )
+        # insertion is staged until commit()
+
+    #insert an alert record into the database
+    def insert_alert(self, alert: dict):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO alerts (
+                timestamp, pid, process_name, exe,
+                rule, severity, reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            alert['timestamp'], alert['pid'], alert['process_name'], alert['exe'],
+            alert['rule'], alert['severity'], alert['reason']
+        )
+        )
+        # insertion is staged until commit()
     
     #commit the current transaction
     def commit(self):
