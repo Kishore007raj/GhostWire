@@ -1,7 +1,7 @@
 import time
 
 # ============================================================================
-# TRUSTED EXECUTABLE LOCATIONS
+# STEP-1-TRUSTED EXECUTABLE LOCATIONS
 # ============================================================================
 # These paths represent legitimate system executables locations on Windows.
 # Any executable originating from outside these paths is considered suspicious.
