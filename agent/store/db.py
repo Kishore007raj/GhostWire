@@ -32,56 +32,70 @@ class GhostwireDB:
     #insert a network connection record into the database
     def insert_connection(self, data):
         cursor = self.conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO connections (
-                timestamp, pid, process_name, exe, username, create_time,
-                local_ip, local_port, remote_ip, remote_port, protocol,
-                status, bytes_sent, bytes_recv
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            data['timestamp'], data['pid'], data['process_name'], data['exe'],
-            data['username'], data['create_time'], data['local_ip'], data['local_port'],
-            data['remote_ip'], data['remote_port'], data['protocol'], data['status'],
-            data['bytes_sent'], data['bytes_recv']
-        )
-        )
+        try:
+            cursor.execute(
+                """
+                INSERT INTO connections (
+                    timestamp, pid, process_name, exe, username, create_time,
+                    local_ip, local_port, remote_ip, remote_port, protocol,
+                    status, bytes_sent, bytes_recv
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                data['timestamp'], data['pid'], data['process_name'], data['exe'],
+                data['username'], data['create_time'], data['local_ip'], data['local_port'],
+                data['remote_ip'], data['remote_port'], data['protocol'], data['status'],
+                data['bytes_sent'], data['bytes_recv']
+            )
+            )
+        finally:
+            cursor.close()
         # Do not commit here; caller (main loop) batches commits for efficiency.
         
    #insert a bandwidth summary record into the database 
     def insert_bandwidth_summary(self, bw: dict):
         cursor = self.conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO bandwidth_summary (
-                timestamp, pid, process_name, exe,
-                bytes_sent, bytes_recv, interval
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            bw['timestamp'], bw['pid'], bw['process_name'], bw['exe'],
-            bw['bytes_sent'], bw['bytes_recv'], bw['interval']
-        )
-        )
+        try:
+            cursor.execute(
+                """
+                INSERT INTO bandwidth_summary (
+                    timestamp, pid, process_name, exe,
+                    bytes_sent, bytes_recv, interval
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                bw['timestamp'], bw['pid'], bw['process_name'], bw['exe'],
+                bw['bytes_sent'], bw['bytes_recv'], bw['interval']
+            )
+            )
+        finally:
+            cursor.close()
         # insertion is staged until commit()
 
     #insert an alert record into the database
     def insert_alert(self, alert: dict):
         cursor = self.conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO alerts (
-                timestamp, pid, process_name, exe,
-                rule, severity, reason
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            alert['timestamp'], alert['pid'], alert['process_name'], alert['exe'],
-            alert['rule'], alert['severity'], alert['reason']
-        )
-        )
+        try:
+            cursor.execute(
+                """
+                INSERT INTO alerts (
+                    timestamp, pid, process_name, exe,
+                    rule, severity, reason
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                alert['timestamp'], alert['pid'], alert['process_name'], alert['exe'],
+                alert['rule'], alert['severity'], alert['reason']
+            )
+            )
+        finally:
+            cursor.close()
         # insertion is staged until commit()
+    
+    #rollback the current transaction
+    def rollback(self):
+        """Rollback any uncommitted changes. Used for error recovery."""
+        self.conn.rollback()
     
     #commit the current transaction
     def commit(self):
