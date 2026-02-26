@@ -25,6 +25,8 @@ def enrich_connections(connections):
                 **conn,  # Include all original connection data.
                 "process_name": proc.name(),  # Add the process name.
                 "exe": proc.exe(),  # Add the executable path.
+                "username": proc.username(),  # Add the username of the process owner.
+                "create_time": proc.create_time()  # Add the process creation time.
             })
 
         except Exception:
@@ -33,6 +35,8 @@ def enrich_connections(connections):
                 **conn,  # Include all original connection data.
                 "process_name": "unknown",  # Set process name to unknown.
                 "exe": None,  # No executable path available.
+                "username": None,  # No username available.
+                "create_time": None  # No creation time available.
             })
 
     return enriched  # Return the list of enriched connections.

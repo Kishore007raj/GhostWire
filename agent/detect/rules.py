@@ -36,14 +36,6 @@ _last_activity = {}
 # Structure: pid -> list[timestamps]
 _connection_counts = {}
 
-# Alert deduplication window: suppress identical alerts within a time window.
-# Prevents alert spam from stateless or long-running conditions.
-# Structure: (pid, rule) -> timestamp of last alert
-_alert_cooldown = {}
-
-# Alert deduplication window (seconds): suppress same (pid, rule) combo
-ALERT_COOLDOWN_SECONDS = 30
-
 
 # ============================================================================
 # RULE 1: UNKNOWN EXECUTABLE DETECTION
@@ -72,17 +64,6 @@ def rule_unknown_executable(record):
         return None
 
     if not exe.startswith(SYSTEM_PATH_PREFIXES):
-        pid = record["pid"]
-        now = record["timestamp"]
-        alert_key = (pid, "unknown_executable")
-        
-        # Check deduplication window
-        last_alert = _alert_cooldown.get(alert_key)
-        if last_alert and (now - last_alert) < ALERT_COOLDOWN_SECONDS:
-            return None
-        
-        _alert_cooldown[alert_key] = now
-        
         return {
             "rule": "unknown_executable",
             "severity": "high",
@@ -121,19 +102,7 @@ def rule_new_destination(record):
     seen = _seen_destinations.setdefault(key, set())
 
     if dest not in seen and seen:
-        pid = record["pid"]
-        now = record["timestamp"]
-        alert_key = (pid, "new_destination")
-        
-        # Check deduplication window
-        last_alert = _alert_cooldown.get(alert_key)
-        if last_alert and (now - last_alert) < ALERT_COOLDOWN_SECONDS:
-            seen.add(dest)
-            return None
-        
-        _alert_cooldown[alert_key] = now
         seen.add(dest)
-        
         return {
             "rule": "new_destination",
             "severity": "medium",
@@ -171,17 +140,6 @@ def rule_high_bandwidth(record, threshold_bytes=5_000_000):
     - threshold_bytes: The bandwidth threshold in bytes. Default is 5MB per interval.
     """
     if record["bytes_sent"] > threshold_bytes or record["bytes_recv"] > threshold_bytes:
-        pid = record["pid"]
-        now = record["timestamp"]
-        alert_key = (pid, "high_bandwidth")
-        
-        # Check deduplication window
-        last_alert = _alert_cooldown.get(alert_key)
-        if last_alert and (now - last_alert) < ALERT_COOLDOWN_SECONDS:
-            return None
-        
-        _alert_cooldown[alert_key] = now
-        
         return {
             "rule": "high_bandwidth",
             "severity": "medium",
@@ -224,15 +182,6 @@ def rule_idle_process_activity(record, idle_seconds=300):
     _last_activity[pid] = now
 
     if last and (now - last) > idle_seconds:
-        alert_key = (pid, "idle_activity")
-        
-        # Check deduplication window
-        last_alert = _alert_cooldown.get(alert_key)
-        if last_alert and (now - last_alert) < ALERT_COOLDOWN_SECONDS:
-            return None
-        
-        _alert_cooldown[alert_key] = now
-        
         return {
             "rule": "idle_activity",
             "severity": "medium",
@@ -281,17 +230,8 @@ def rule_repeated_connections(record, window_seconds=60, threshold=10):
     _connection_counts[pid] = [t for t in timestamps if now - t <= window_seconds]
 
     if len(_connection_counts[pid]) > threshold:
-        alert_key = (pid, "repeated_connections")
-        
-        # Check deduplication window
-        last_alert = _alert_cooldown.get(alert_key)
-        if last_alert and (now - last_alert) < ALERT_COOLDOWN_SECONDS:
-            _connection_counts[pid] = []
-            return None
-        
-        _alert_cooldown[alert_key] = now
+        # Reset timestamps to avoid repeated spam from the same ongoing burst.
         _connection_counts[pid] = []
-        
         return {
             "rule": "repeated_connections",
             "severity": "low",

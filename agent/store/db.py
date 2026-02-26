@@ -36,14 +36,15 @@ class GhostwireDB:
             cursor.execute(
                 """
                 INSERT INTO connections (
-                    timestamp, pid, process_name, exe, protocol, local_ip, local_port,
-                    remote_ip, remote_port, status, bytes_sent, bytes_recv
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    timestamp, pid, process_name, exe, username, create_time,
+                    local_ip, local_port, remote_ip, remote_port, protocol,
+                    status, bytes_sent, bytes_recv
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 data['timestamp'], data['pid'], data['process_name'], data['exe'],
-                data['protocol'], data['local_ip'], data['local_port'],
-                data['remote_ip'], data['remote_port'], data['status'],
+                data['username'], data['create_time'], data['local_ip'], data['local_port'],
+                data['remote_ip'], data['remote_port'], data['protocol'], data['status'],
                 data['bytes_sent'], data['bytes_recv']
             )
             )
