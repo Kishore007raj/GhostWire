@@ -14,16 +14,25 @@ async def live_alerts(websocket: WebSocket):
 
     last_seen_id = 0
 
-    while True:
-        alerts = fetch_all_alerts(limit=100)
+    try:
+        while True:
+            alerts = fetch_all_alerts(limit=100)
 
-        new_alerts = [
-            alert for alert in alerts
-            if alert["id"] > last_seen_id
-        ]
+            new_alerts = [
+                alert for alert in alerts
+                if alert["id"] > last_seen_id
+            ]
 
-        for alert in reversed(new_alerts):
-            await websocket.send_json(alert)
-            last_seen_id = alert["id"]
+            for alert in reversed(new_alerts):
+                await websocket.send_json(alert)
+                last_seen_id = alert["id"]
 
-        await asyncio.sleep(2)
+            await asyncio.sleep(2)
+    except Exception as e:
+        # likely a WebSocketDisconnect or other send error
+        print(f"WebSocket connection closed or error: {e}")
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
