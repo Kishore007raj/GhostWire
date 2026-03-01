@@ -4,6 +4,28 @@ from agent.process.mapper import enrich_connections  # Import function to enrich
 from agent.traffic.bandwidth import BandwidthTracker  # Import BandwidthTracker class for network monitoring.
 from agent.store.db import GhostwireDB  # Import GhostwireDB class for database operations.
 from agent.detect.engine import run_detection  # Import function to run detection rules.
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from backend.api import router as api_router
+from backend.ws import router as ws_router
+
+app = FastAPI(title="GhostWire Agent")
+
+# Allow frontend to call backend from different port
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8000"],  # frontend port
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(api_router)
+app.include_router(ws_router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the GhostWire Agent API!"}
 
 def run_agent():
     """

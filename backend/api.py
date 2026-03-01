@@ -19,3 +19,8 @@ def get_alerts(limit: int = 100):
 @router.get("/bandwidth_summary")
 def get_bandwidth_summary(limit: int = 100):
     return fetch_bandwidth_summary(limit)
+
+# alias endpoint for older clients
+@router.get("/bandwidth")
+def get_bandwidth(limit: int = 100):
+    return fetch_bandwidth_summary(limit)
